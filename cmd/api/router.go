@@ -1,13 +1,14 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-type server struct {
+type application struct {
 	config config
 }
 
@@ -15,7 +16,7 @@ type config struct {
 	addr string
 }
 
-func (s *server) mount() http.Handler {
+func (a *application) mount() http.Handler {
 	r := chi.NewRouter()
 	
 	r.Use(middleware.RequestID)
@@ -31,11 +32,12 @@ func (s *server) mount() http.Handler {
 	return r
 }
 
-func (s *server) run(mux http.Handler) error {
+func (a *application) run(mux http.Handler) error {
 	srv := &http.Server{
-		Addr:    s.config.addr,
+		Addr:    a.config.addr,
 		Handler: mux,
 	}
-
+	log.Printf("Server started on port %s", a.config.addr)
+	
 	return srv.ListenAndServe()
 }

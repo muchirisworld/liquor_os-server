@@ -1,13 +1,24 @@
 package main
 
-import "log"
+import (
+	"log"
+	"os"
+
+	"github.com/joho/godotenv"
+)
 
 func main() {
+	// TODO: Create a util function to load and parse env variables
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("Failed to load env variables: %v", err)
+	}
+	port := os.Getenv("PORT")
+
 	cfg := &config{
-		addr: ":8000",
+		addr: port,
 	}
 
-	srv := &server{
+	srv := &application{
 		config: *cfg,
 	}
 
