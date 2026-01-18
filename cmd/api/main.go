@@ -3,7 +3,10 @@ package main
 import (
 	"log"
 	"net/http"
-	
+	"os"
+
+	"github.com/All-Things-Muchiri/server/internal/auth"
+	"github.com/All-Things-Muchiri/server/internal/clerk"
 	"github.com/All-Things-Muchiri/server/internal/config"
 	"github.com/All-Things-Muchiri/server/internal/router"
 	"github.com/joho/godotenv"
@@ -11,6 +14,7 @@ import (
 
 type application struct {
 	config config.Config
+	authProvider auth.AuthProvider
 }
 
 func main() {
@@ -19,8 +23,15 @@ func main() {
 		log.Fatalf("Failed to load env variables: %v", err)
 	}
 	
-	cfg := config.LoadConfig()
-	router := router.NewRouter()
+	secret := os.Getenv("AUTH_SECRET_KEY")
+    
+	authConfig := &config.AuthConfig{
+		SecretKey: secret,
+	}
+	
+	cfg := config.LoadConfig(authConfig)
+	clerkProvider := clerk.NewProvider(*cfg.AuthConfig)
+	router := router.NewRouter(clerkProvider)
 
 	srv := &application{
 		config: *cfg,
