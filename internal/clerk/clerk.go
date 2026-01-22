@@ -7,8 +7,9 @@ import (
 )
 
 type ClerkProvider struct {
-	client     client.Client
-	authConfig config.AuthConfig
+	client       client.Client
+	clientConfig *clerk.ClientConfig
+	authConfig   config.AuthConfig
 }
 
 func NewProvider(authConfig config.AuthConfig) *ClerkProvider {
@@ -16,6 +17,7 @@ func NewProvider(authConfig config.AuthConfig) *ClerkProvider {
 	clientCfg.Key = &authConfig.SecretKey
 
 	return &ClerkProvider{
-		client: *client.NewClient(&clientCfg),
+		client:       *client.NewClient(&clientCfg),
+		clientConfig: &clientCfg,
 	}
 }
