@@ -43,7 +43,7 @@ func main() {
 		}
 	}
 
-	secret := os.Getenv("AUTH_SECRET_KEY")
+	secret := required["AUTH_SECRET_KEY"]
 
 	authConfig := &config.AuthConfig{
 		SecretKey: secret,
@@ -55,12 +55,12 @@ func main() {
 	}
 
 	db, err := database.New(&database.DBConfig{
-		Host:     os.Getenv("DATABASE_HOST"),
+		Host:     required["DATABASE_HOST"],
 		Port:     dbPort,
-		User:     os.Getenv("DATABASE_USER"),
-		Password: os.Getenv("DATABASE_PASSWORD"),
-		Database: os.Getenv("DATABASE_NAME"),
-		SSLMode:  os.Getenv("SSL_MODE"),
+		User:     required["DATABASE_USER"],
+		Password: required["DATABASE_PASSWORD"],
+		Database: required["DATABASE_NAME"],
+		SSLMode:  required["SSL_MODE"],
 	})
 
 	if err != nil {
