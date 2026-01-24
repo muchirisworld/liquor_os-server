@@ -1,6 +1,7 @@
 package router
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/All-Things-Muchiri/server/internal/auth"
@@ -13,6 +14,9 @@ type AppRouter struct {
 }
 
 func NewRouter(authProvider auth.AuthProvider) *AppRouter {
+	if authProvider == nil {
+		log.Fatal("authProvider is required")
+	}
 	return &AppRouter{
 		authProvider: authProvider,
 	}
