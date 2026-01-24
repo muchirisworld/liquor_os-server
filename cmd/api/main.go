@@ -66,6 +66,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
+	defer db.Close()
 
 	cfg := config.LoadConfig(authConfig)
 	clerkProvider := clerk.NewProvider(*cfg.AuthConfig)
