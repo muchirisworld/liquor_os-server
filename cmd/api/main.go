@@ -29,6 +29,7 @@ func main() {
 
 	required := map[string]string{
 		"PORT":              os.Getenv("PORT"),
+		"DATABASE_PORT":     os.Getenv("DATABASE_PORT"),
 		"DATABASE_HOST":     os.Getenv("DATABASE_HOST"),
 		"DATABASE_USER":     os.Getenv("DATABASE_USER"),
 		"DATABASE_PASSWORD": os.Getenv("DATABASE_PASSWORD"),
@@ -63,8 +64,9 @@ func main() {
 	})
 
 	if err != nil {
-		log.Fatalf("Failed to intialize database: %v", err)
+		log.Fatalf("Failed to initialize database: %v", err)
 	}
+	defer db.Close()
 
 	cfg := config.LoadConfig(authConfig)
 	clerkProvider := clerk.NewProvider(*cfg.AuthConfig)
