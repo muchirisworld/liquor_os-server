@@ -53,6 +53,10 @@ func (p ClerkProvider) RequireAuth() func(http.Handler) http.Handler {
 				Token: token,
 				JWK:   jwk,
 			})
+			if err != nil {
+				http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
+				return
+			}
 
 			// Attach user ID to context
 			ctx := context.WithValue(r.Context(), ClerkUserIDKey, claims.Subject)
