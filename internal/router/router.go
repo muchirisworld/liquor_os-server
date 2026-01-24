@@ -31,6 +31,7 @@ func (a *AppRouter) Mount() http.Handler {
 	r.Use(middleware.Recoverer)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`{ "status": "ok" }`))
 	})
@@ -38,6 +39,7 @@ func (a *AppRouter) Mount() http.Handler {
 	r.Route("/auth", func(r chi.Router) {
 		r.Use(a.authProvider.RequireAuth())
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte(`{ "status": "ok" }`))
 		})
