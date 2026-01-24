@@ -17,7 +17,7 @@ func LoadConfig(authConfig *AuthConfig) *Config {
 	port := os.Getenv("PORT")
 
 	cfg := &Config{
-		Addr: port,
+		Addr:       port,
 		AuthConfig: authConfig,
 	}
 

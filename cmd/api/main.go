@@ -1,13 +1,16 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/All-Things-Muchiri/server/internal/auth"
 	"github.com/All-Things-Muchiri/server/internal/clerk"
 	"github.com/All-Things-Muchiri/server/internal/config"
+	"github.com/All-Things-Muchiri/server/internal/database"
 	"github.com/All-Things-Muchiri/server/internal/router"
 	"github.com/joho/godotenv"
 )
@@ -15,6 +18,7 @@ import (
 type application struct {
 	config       config.Config
 	authProvider auth.AuthProvider
+	db           *sql.DB
 }
 
 func main() {
@@ -23,14 +27,46 @@ func main() {
 		log.Fatalf("Failed to load env variables: %v", err)
 	}
 
-	secret := os.Getenv("AUTH_SECRET_KEY")
-	if secret == "" {
-		log.Fatalf("AUTH_SECRET_KEY environment variable is required but not set")
+	required := map[string]string{
+		"PORT":              os.Getenv("PORT"),
+		"DATABASE_PORT":     os.Getenv("DATABASE_PORT"),
+		"DATABASE_HOST":     os.Getenv("DATABASE_HOST"),
+		"DATABASE_USER":     os.Getenv("DATABASE_USER"),
+		"DATABASE_PASSWORD": os.Getenv("DATABASE_PASSWORD"),
+		"DATABASE_NAME":     os.Getenv("DATABASE_NAME"),
+		"SSL_MODE":          os.Getenv("SSL_MODE"),
+		"AUTH_SECRET_KEY":   os.Getenv("AUTH_SECRET_KEY"),
 	}
+	for k, v := range required {
+		if v == "" {
+			log.Fatalf("%s environment variable is required but not set", k)
+		}
+	}
+
+	secret := os.Getenv("AUTH_SECRET_KEY")
 
 	authConfig := &config.AuthConfig{
 		SecretKey: secret,
 	}
+
+	dbPort, err := strconv.Atoi(os.Getenv("DATABASE_PORT"))
+	if err != nil {
+		log.Fatalf("Failed to parse DATABASE_PORT: %v", err)
+	}
+
+	db, err := database.New(&database.DBConfig{
+		Host:     os.Getenv("DATABASE_HOST"),
+		Port:     dbPort,
+		User:     os.Getenv("DATABASE_USER"),
+		Password: os.Getenv("DATABASE_PASSWORD"),
+		Database: os.Getenv("DATABASE_NAME"),
+		SSLMode:  os.Getenv("SSL_MODE"),
+	})
+
+	if err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
+	defer db.Close()
 
 	cfg := config.LoadConfig(authConfig)
 	clerkProvider := clerk.NewProvider(*cfg.AuthConfig)
@@ -41,6 +77,7 @@ func main() {
 
 	srv := &application{
 		config: *cfg,
+		db:     db,
 	}
 
 	mux := apiRouter.Mount()
