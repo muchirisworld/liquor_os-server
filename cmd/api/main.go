@@ -64,7 +64,7 @@ func main() {
 	})
 
 	if err != nil {
-		log.Fatalf("Failed to intialize database: %v", err)
+		log.Fatalf("Failed to initialize database: %v", err)
 	}
 
 	cfg := config.LoadConfig(authConfig)
