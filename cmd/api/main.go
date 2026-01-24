@@ -27,10 +27,22 @@ func main() {
 		log.Fatalf("Failed to load env variables: %v", err)
 	}
 
-	secret := os.Getenv("AUTH_SECRET_KEY")
-	if secret == "" {
-		log.Fatalf("AUTH_SECRET_KEY environment variable is required but not set")
+	required := map[string]string{
+		"PORT":              os.Getenv("PORT"),
+		"DATABASE_HOST":     os.Getenv("DATABASE_HOST"),
+		"DATABASE_USER":     os.Getenv("DATABASE_USER"),
+		"DATABASE_PASSWORD": os.Getenv("DATABASE_PASSWORD"),
+		"DATABASE_NAME":     os.Getenv("DATABASE_NAME"),
+		"SSL_MODE":          os.Getenv("SSL_MODE"),
+		"AUTH_SECRET_KEY":   os.Getenv("AUTH_SECRET_KEY"),
 	}
+	for k, v := range required {
+		if v == "" {
+			log.Fatalf("%s environment variable is required but not set", k)
+		}
+	}
+
+	secret := os.Getenv("AUTH_SECRET_KEY")
 
 	authConfig := &config.AuthConfig{
 		SecretKey: secret,
@@ -47,7 +59,9 @@ func main() {
 		User:     os.Getenv("DATABASE_USER"),
 		Password: os.Getenv("DATABASE_PASSWORD"),
 		Database: os.Getenv("DATABASE_NAME"),
+		SSLMode:  os.Getenv("SSL_MODE"),
 	})
+
 	if err != nil {
 		log.Fatalf("Failed to intialize database: %v", err)
 	}

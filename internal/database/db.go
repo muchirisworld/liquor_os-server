@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
+	"net/url"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -16,25 +16,32 @@ type DBConfig struct {
 	User     string
 	Password string
 	Database string
+	SSLMode  string
 }
 
 func New(cfg *DBConfig) (*sql.DB, error) {
-	dsn := fmt.Sprintf(
-        "postgres://%s:%s@%s:%d/%s?sslmode=disable",
-        cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Database,
-    )
-	
-	db, err := sql.Open("pgx", dsn)
+	dbURL := &url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword(cfg.User, cfg.Password),
+		Host:   fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
+		Path:   cfg.Database,
+	}
+	q := dbURL.Query()
+	q.Set("sslmode", cfg.SSLMode)
+	dbURL.RawQuery = q.Encode()
+
+	db, err := sql.Open("pgx", dbURL.String())
 	if err != nil {
-		log.Fatalf("Failed to open local database: %v", err)
+		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
-	
-	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	
+
 	if err = db.PingContext(ctx); err != nil {
-		return nil, err
+		db.Close()
+		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
-	
+
 	return db, nil
 }
