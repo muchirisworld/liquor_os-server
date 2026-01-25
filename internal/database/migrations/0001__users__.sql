@@ -1,37 +1,9 @@
 -- +goose up
 
-CREATE EXTENSION IF NOT EXISTS citext;
-
--- +goose statementbegin
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'email_citext') THEN
-        CREATE DOMAIN email_citext AS citext
-        CHECK (
-            VALUE ~* '^[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,63}$'
-        );
-    END IF;
-END$$;
-
-CREATE OR REPLACE FUNCTION trg_set_updated_at()
-RETURNS trigger LANGUAGE plpgsql AS $$
-BEGIN
-    NEW.updated_at := now();
-    RETURN NEW;
-END$$;
-
-CREATE OR REPLACE FUNCTION trg_normalize_email()
-RETURNS trigger LANGUAGE plpgsql AS $$
-BEGIN
-    NEW.email := lower(NEW.email);
-    RETURN NEW;
-END$$;
--- +goose statementend
-
 CREATE TABLE "user" (
 	"id" varchar PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
-	"email" varchar NOT NULL UNIQUE,
+	"email" email_citext NOT NULL UNIQUE,
 	"email_verified" boolean DEFAULT false NOT NULL,
 	"image" text,
 	"created_at" timestamptz DEFAULT now() NOT NULL,
