@@ -23,3 +23,5 @@ FOR EACH ROW EXECUTE FUNCTION trg_normalize_email();
 -- +goose down
 DROP TABLE IF EXISTS "user";
 DROP DOMAIN IF EXISTS email_citext;
+DROP FUNCTION IF EXISTS trg_set_updated_at;
+DROP FUNCTION IF EXISTS trg_normalize_email;
