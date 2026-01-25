@@ -2,12 +2,12 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"net/url"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jmoiron/sqlx"
 )
 
 type DBConfig struct {
@@ -19,7 +19,7 @@ type DBConfig struct {
 	SSLMode  string
 }
 
-func New(cfg *DBConfig) (*sql.DB, error) {
+func New(cfg *DBConfig) (*sqlx.DB, error) {
 	dbURL := &url.URL{
 		Scheme: "postgres",
 		User:   url.UserPassword(cfg.User, cfg.Password),
@@ -30,7 +30,7 @@ func New(cfg *DBConfig) (*sql.DB, error) {
 	q.Set("sslmode", cfg.SSLMode)
 	dbURL.RawQuery = q.Encode()
 
-	db, err := sql.Open("pgx", dbURL.String())
+	db, err := sqlx.Open("pgx", dbURL.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}

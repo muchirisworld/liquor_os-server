@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 	"os"
@@ -12,13 +11,14 @@ import (
 	"github.com/All-Things-Muchiri/server/internal/config"
 	"github.com/All-Things-Muchiri/server/internal/database"
 	"github.com/All-Things-Muchiri/server/internal/router"
+	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 )
 
 type application struct {
 	config       config.Config
 	authProvider auth.AuthProvider
-	db           *sql.DB
+	db           *sqlx.DB
 }
 
 func main() {
