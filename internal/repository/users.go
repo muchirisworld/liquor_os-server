@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/All-Things-Muchiri/server/internal/domain"
 	"github.com/jmoiron/sqlx"
@@ -32,10 +33,17 @@ func (r *UserRepository) CreateUser(ctx context.Context, userRequest *domain.Use
 	defer rows.Close()
 	
 	var user domain.User
-	if rows.Next() {
-		if err := rows.StructScan(&user); err != nil {
+		if !rows.Next() {
+		if err := rows.Err(); err != nil {
 			return nil, err
 		}
+		return nil, sql.ErrNoRows
+	}
+	if err := rows.StructScan(&user); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	
 	return &user, nil
