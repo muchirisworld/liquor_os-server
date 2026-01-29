@@ -20,7 +20,7 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 
 func (r *UserRepository) CreateUser(ctx context.Context, userRequest *domain.UserRequest) (*domain.User, error) {
 	rows, err := r.db.NamedQueryContext(ctx,
-		`INSERT INTO "user" (
+		`INSERT INTO users (
 			 id, name, email, email_verified, image
 		) VALUES (
 			:id, :name, :email, :email_verified, :image
