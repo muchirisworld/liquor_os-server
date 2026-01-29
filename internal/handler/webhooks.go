@@ -14,26 +14,34 @@ import (
 
 type WebhookHandler struct {
 	userService *service.UserService
-	whSecret string
+	whSecret    string
 }
 
 func NewWebhookHandler(whSecret string, service *service.UserService) *WebhookHandler {
 	return &WebhookHandler{
 		userService: service,
-		whSecret: whSecret,
+		whSecret:    whSecret,
 	}
 }
 
 func (wh *WebhookHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	
+
+	// Limit request body size to 1MB
+	const maxBytes = 1 << 20 // 1MB
+	r.Body = http.MaxBytesReader(w, r.Body, maxBytes)
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("Failed to read body: %v", err)
-		http.Error(w, "Failed to read body", http.StatusBadRequest)
+		if err.Error() == "http: request body too large" {
+			http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
+		} else {
+			http.Error(w, "Failed to read body", http.StatusBadRequest)
+		}
 		return
 	}
-	
+
 	// TODO: Verify webhook
 	whEvent := config.NewWebhookEvent()
 	if err := json.Unmarshal(body, whEvent); err != nil {
@@ -41,34 +49,34 @@ func (wh *WebhookHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to decode event", http.StatusInternalServerError)
 		return
 	}
-	
+
 	var processingError error
 	switch whEvent.Type {
 	case "user.created":
 		var usrData config.UserCreatedEvent
-		
+
 		if err := json.Unmarshal(whEvent.Data, &usrData); err != nil {
 			log.Printf("Failed to decode event: %v", err)
 			http.Error(w, "Failed to decode event", http.StatusInternalServerError)
 			return
 		}
-		
+
 		usrRequest := &domain.UserRequest{
-			ID: usrData.UserID,
-			Name: fmt.Sprintf("%s %s", usrData.Firstname, usrData.Lastname),
-			Email: usrData.EmailAddresses[0].EmailAdresses,
-			Image: usrData.ImageURL,
+			ID:            usrData.UserID,
+			Name:          fmt.Sprintf("%s %s", usrData.Firstname, usrData.Lastname),
+			Email:         usrData.EmailAddresses[0].EmailAdresses,
+			Image:         usrData.ImageURL,
 			EmailVerified: true,
 		}
-		
+
 		processingError = wh.userService.CreateUser(ctx, usrRequest)
 	}
-	
+
 	if processingError != nil {
 		log.Printf("Failed to save user: %v", processingError)
 		http.Error(w, "Failed to save user", http.StatusBadRequest)
 		return
 	}
-	
+
 	w.WriteHeader(http.StatusOK)
 }
