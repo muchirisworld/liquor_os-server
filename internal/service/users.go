@@ -22,6 +22,15 @@ func (s *UserService) CreateUser(ctx context.Context, userRequest *domain.UserRe
 	if err != nil {
 		return err
 	}
-	
+
+	return nil
+}
+
+func (s *UserService) UpdateUser(ctx context.Context, userRequest *domain.UserRequest) error {
+	_, err := s.userRepo.UpdateUser(ctx, userRequest)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

@@ -50,6 +50,8 @@ func (wh *WebhookHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("Webhook event: %v", string(body))
+
 	var processingError error
 	switch whEvent.Type {
 	case "user.created":
@@ -75,11 +77,34 @@ func (wh *WebhookHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		processingError = wh.userService.CreateUser(ctx, usrRequest)
+	case "user.updated":
+		var usrData config.UserUpdatedEvent
+
+		if err := json.Unmarshal(whEvent.Data, &usrData); err != nil {
+			log.Printf("Failed to decode event: %v", err)
+			http.Error(w, "Failed to decode event", http.StatusInternalServerError)
+			return
+		}
+
+		email := ""
+		if len(usrData.EmailAddresses) > 0 {
+			email = usrData.EmailAddresses[0].EmailAdresses
+		}
+
+		usrRequest := &domain.UserRequest{
+			ID:            usrData.UserID,
+			Name:          fmt.Sprintf("%s %s", usrData.Firstname, usrData.Lastname),
+			Email:         email,
+			Image:         usrData.ImageURL,
+			EmailVerified: true,
+		}
+
+		processingError = wh.userService.UpdateUser(ctx, usrRequest)
 	}
 
 	if processingError != nil {
-		log.Printf("Failed to save user: %v", processingError)
-		http.Error(w, "Failed to save user", http.StatusBadRequest)
+		log.Printf("Failed to process user event: %v", processingError)
+		http.Error(w, "Failed to process user event", http.StatusBadRequest)
 		return
 	}
 

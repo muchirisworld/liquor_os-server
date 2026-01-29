@@ -31,6 +31,13 @@ type UserCreatedEvent struct {
 	ImageURL       string         `json:"image_url"`
 }
 
+type UserUpdatedEvent struct {
+	Firstname      string         `json:"first_name"`
+	Lastname       string         `json:"last_name"`
+	UserID         string         `json:"id"`
+	EmailAddresses []EmailAddress `json:"email_addresses"`
+	ImageURL       string         `json:"image_url"`
+}
 
 type EmailAddress struct {
 	EmailAdresses string `json:"email_address"`
