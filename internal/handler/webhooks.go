@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -35,7 +36,8 @@ func (wh *WebhookHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("Failed to read body: %v", err)
-		if err.Error() == "http: request body too large" {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
 			http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
 		} else {
 			http.Error(w, "Failed to read body", http.StatusBadRequest)
@@ -51,14 +53,16 @@ func (wh *WebhookHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Webhook event: %v", string(body))
-
 	var processingError error
 	switch whEvent.Type {
 	case "user.created":
 		processingError = wh.handleUserCreated(ctx, whEvent.Data)
 	case "user.updated":
 		processingError = wh.handleUserUpdated(ctx, whEvent.Data)
+	default:
+		log.Printf("Unhandled event type: %s", whEvent.Type)
+		w.WriteHeader(http.StatusOK)
+		return
 	}
 
 	if processingError != nil {
