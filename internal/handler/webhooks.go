@@ -61,10 +61,15 @@ func (wh *WebhookHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		email := ""
+		if len(usrData.EmailAddresses) > 0 {
+			email = usrData.EmailAddresses[0].EmailAdresses
+		}
+
 		usrRequest := &domain.UserRequest{
 			ID:            usrData.UserID,
 			Name:          fmt.Sprintf("%s %s", usrData.Firstname, usrData.Lastname),
-			Email:         usrData.EmailAddresses[0].EmailAdresses,
+			Email:         email,
 			Image:         usrData.ImageURL,
 			EmailVerified: true,
 		}
