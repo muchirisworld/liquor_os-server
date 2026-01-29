@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -55,51 +56,9 @@ func (wh *WebhookHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var processingError error
 	switch whEvent.Type {
 	case "user.created":
-		var usrData config.UserCreatedEvent
-
-		if err := json.Unmarshal(whEvent.Data, &usrData); err != nil {
-			log.Printf("Failed to decode event: %v", err)
-			http.Error(w, "Failed to decode event", http.StatusInternalServerError)
-			return
-		}
-
-		email := ""
-		if len(usrData.EmailAddresses) > 0 {
-			email = usrData.EmailAddresses[0].EmailAdresses
-		}
-
-		usrRequest := &domain.UserRequest{
-			ID:            usrData.UserID,
-			Name:          fmt.Sprintf("%s %s", usrData.Firstname, usrData.Lastname),
-			Email:         email,
-			Image:         usrData.ImageURL,
-			EmailVerified: true,
-		}
-
-		processingError = wh.userService.CreateUser(ctx, usrRequest)
+		processingError = wh.handleUserCreated(ctx, whEvent.Data)
 	case "user.updated":
-		var usrData config.UserUpdatedEvent
-
-		if err := json.Unmarshal(whEvent.Data, &usrData); err != nil {
-			log.Printf("Failed to decode event: %v", err)
-			http.Error(w, "Failed to decode event", http.StatusInternalServerError)
-			return
-		}
-
-		email := ""
-		if len(usrData.EmailAddresses) > 0 {
-			email = usrData.EmailAddresses[0].EmailAdresses
-		}
-
-		usrRequest := &domain.UserRequest{
-			ID:            usrData.UserID,
-			Name:          fmt.Sprintf("%s %s", usrData.Firstname, usrData.Lastname),
-			Email:         email,
-			Image:         usrData.ImageURL,
-			EmailVerified: true,
-		}
-
-		processingError = wh.userService.UpdateUser(ctx, usrRequest)
+		processingError = wh.handleUserUpdated(ctx, whEvent.Data)
 	}
 
 	if processingError != nil {
@@ -109,4 +68,52 @@ func (wh *WebhookHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (wh *WebhookHandler) handleUserCreated(ctx context.Context, data json.RawMessage) error {
+	var usrData config.UserCreatedEvent
+
+	if err := json.Unmarshal(data, &usrData); err != nil {
+		log.Printf("Failed to decode user.created event: %v", err)
+		return err
+	}
+
+	email := ""
+	if len(usrData.EmailAddresses) > 0 {
+		email = usrData.EmailAddresses[0].EmailAdresses
+	}
+
+	usrRequest := &domain.UserRequest{
+		ID:            usrData.UserID,
+		Name:          fmt.Sprintf("%s %s", usrData.Firstname, usrData.Lastname),
+		Email:         email,
+		Image:         usrData.ImageURL,
+		EmailVerified: true,
+	}
+
+	return wh.userService.CreateUser(ctx, usrRequest)
+}
+
+func (wh *WebhookHandler) handleUserUpdated(ctx context.Context, data json.RawMessage) error {
+	var usrData config.UserUpdatedEvent
+
+	if err := json.Unmarshal(data, &usrData); err != nil {
+		log.Printf("Failed to decode user.updated event: %v", err)
+		return err
+	}
+
+	email := ""
+	if len(usrData.EmailAddresses) > 0 {
+		email = usrData.EmailAddresses[0].EmailAdresses
+	}
+
+	usrRequest := &domain.UserRequest{
+		ID:            usrData.UserID,
+		Name:          fmt.Sprintf("%s %s", usrData.Firstname, usrData.Lastname),
+		Email:         email,
+		Image:         usrData.ImageURL,
+		EmailVerified: true,
+	}
+
+	return wh.userService.UpdateUser(ctx, usrRequest)
 }
