@@ -87,9 +87,6 @@ func main() {
 		AuthProvider: clerkProvider,
 		WhHandler: whHandler,
 	}
-	if err != nil {
-		log.Fatalf("Failed to create router: %v", err)
-	}
 
 	srv := &application{
 		config: *cfg,
