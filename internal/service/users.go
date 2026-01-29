@@ -8,14 +8,20 @@ import (
 )
 
 type UserService struct {
-	userRepo repository.UserRepository
+	userRepo *repository.UserRepository
 }
 
-func (s *UserService) CreateUser(ctx context.Context, userRequest *domain.UserRequest) (*domain.User, error) {
-	usr, err := s.userRepo.CreateUser(ctx, userRequest)
+func NewUserService(userRepo *repository.UserRepository) *UserService {
+	return &UserService{
+		userRepo: userRepo,
+	}
+}
+
+func (s *UserService) CreateUser(ctx context.Context, userRequest *domain.UserRequest) error {
+	_, err := s.userRepo.CreateUser(ctx, userRequest)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	
-	return usr, nil
+	return nil
 }
