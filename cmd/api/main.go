@@ -10,7 +10,10 @@ import (
 	"github.com/All-Things-Muchiri/server/internal/clerk"
 	"github.com/All-Things-Muchiri/server/internal/config"
 	"github.com/All-Things-Muchiri/server/internal/database"
+	"github.com/All-Things-Muchiri/server/internal/handler"
+	"github.com/All-Things-Muchiri/server/internal/repository"
 	"github.com/All-Things-Muchiri/server/internal/router"
+	"github.com/All-Things-Muchiri/server/internal/service"
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 )
@@ -36,6 +39,7 @@ func main() {
 		"DATABASE_NAME":     os.Getenv("DATABASE_NAME"),
 		"SSL_MODE":          os.Getenv("SSL_MODE"),
 		"AUTH_SECRET_KEY":   os.Getenv("AUTH_SECRET_KEY"),
+		"CLERK_WEBHOOK_SECRET": os.Getenv("CLERK_WEBHOOK_SECRET"),
 	}
 	for k, v := range required {
 		if v == "" {
@@ -67,12 +71,21 @@ func main() {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 	defer db.Close()
+	
+	// REPOSITORIES
+	userRepo := repository.NewUserRepository(db)
+	
+	// SERVICES
+	userService := service.NewUserService(userRepo)
+	
+	// HANDLERS	
+	whHandler := handler.NewWebhookHandler(required["CLERK_WEBHOOK_SECRET"], userService)
 
 	cfg := config.LoadConfig(authConfig)
 	clerkProvider := clerk.NewProvider(*cfg.AuthConfig)
-	apiRouter, err := router.NewRouter(clerkProvider)
-	if err != nil {
-		log.Fatalf("Failed to create router: %v", err)
+	apiRouter := &router.AppRouter{
+		AuthProvider: clerkProvider,
+		WhHandler: whHandler,
 	}
 
 	srv := &application{
