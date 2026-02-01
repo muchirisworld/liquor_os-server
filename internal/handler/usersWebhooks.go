@@ -14,6 +14,18 @@ import (
 	"github.com/All-Things-Muchiri/server/internal/service"
 )
 
+type UserCreatedOrUpdatedEvent struct {
+	Firstname      string         `json:"first_name"`
+	Lastname       string         `json:"last_name"`
+	UserID         string         `json:"id"`
+	EmailAddresses []EmailAddress `json:"email_addresses"`
+	ImageURL       string         `json:"image_url"`
+}
+
+type EmailAddress struct {
+	EmailAdresses string `json:"email_address"`
+}
+
 type WebhookHandler struct {
 	userService *service.UserService
 	whSecret    string
@@ -77,7 +89,7 @@ func (wh *WebhookHandler) HandleUsersWebhooks(w http.ResponseWriter, r *http.Req
 }
 
 func (wh *WebhookHandler) handleUserCreated(ctx context.Context, data json.RawMessage) error {
-	var usrData config.UserCreatedEvent
+	var usrData UserCreatedOrUpdatedEvent
 
 	if err := json.Unmarshal(data, &usrData); err != nil {
 		log.Printf("Failed to decode user.created event: %v", err)
@@ -101,7 +113,7 @@ func (wh *WebhookHandler) handleUserCreated(ctx context.Context, data json.RawMe
 }
 
 func (wh *WebhookHandler) handleUserUpdated(ctx context.Context, data json.RawMessage) error {
-	var usrData config.UserUpdatedEvent
+	var usrData UserCreatedOrUpdatedEvent
 
 	if err := json.Unmarshal(data, &usrData); err != nil {
 		log.Printf("Failed to decode user.updated event: %v", err)
