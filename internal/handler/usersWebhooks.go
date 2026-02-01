@@ -26,7 +26,7 @@ func NewWebhookHandler(whSecret string, service *service.UserService) *WebhookHa
 	}
 }
 
-func (wh *WebhookHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+func (wh *WebhookHandler) HandleUsersWebhooks(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// Limit request body size to 1MB
@@ -44,6 +44,8 @@ func (wh *WebhookHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	
+	log.Printf("Event payload: %v", string(body))
 
 	// TODO: Verify webhook
 	whEvent := config.NewWebhookEvent()

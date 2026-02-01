@@ -38,7 +38,9 @@ func (a *AppRouter) Mount() http.Handler {
 	})
 	
 	r.Route("/webhooks", func(r chi.Router) {
-		r.Post("/clerk", a.WhHandler.CreateUser)
+		r.Route("/clerk", func(r chi.Router) {
+			r.Post("/users", a.WhHandler.HandleUsersWebhooks)
+		})
 	})
 
 	return r
