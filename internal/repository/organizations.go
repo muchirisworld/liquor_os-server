@@ -33,11 +33,17 @@ func (r *OrganizationsRepository) CreateOrganization(organization *domain.Organi
 	defer rows.Close()
 
 	var createdOrg domain.Organization
-	if rows.Next() {
-		err = rows.StructScan(&createdOrg)
-		if err != nil {
+	if !rows.Next() {
+		if err := rows.Err(); err != nil {
 			return nil, err
 		}
+		return nil, sql.ErrNoRows
+	}
+	if err := rows.StructScan(&createdOrg); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return &createdOrg, nil
