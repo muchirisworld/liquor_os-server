@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"database/sql"
+
 	"github.com/All-Things-Muchiri/server/internal/domain"
 	"github.com/jmoiron/sqlx"
 )
