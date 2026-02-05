@@ -7,7 +7,7 @@ import (
 )
 
 type WebhookEvent struct {
-	ID        string          `json:"id"`
+	ID        string          `json:"instance_id"`
 	Type      string          `json:"type"`
 	Timestamp time.Time       `json:"-"`
 	Data      json.RawMessage `json:"data"`

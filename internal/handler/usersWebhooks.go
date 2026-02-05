@@ -14,6 +14,9 @@ import (
 	"github.com/All-Things-Muchiri/server/internal/service"
 )
 
+// Limit request body size to 1MB
+const MAX_BYTES = 1 << 20 // 1MB
+
 type UserCreatedOrUpdatedEvent struct {
 	Firstname      string         `json:"first_name"`
 	Lastname       string         `json:"last_name"`
@@ -26,24 +29,22 @@ type EmailAddress struct {
 	EmailAdresses string `json:"email_address"`
 }
 
-type WebhookHandler struct {
+type UsersWebhookHandler struct {
 	userService *service.UserService
 	whSecret    string
 }
 
-func NewWebhookHandler(whSecret string, service *service.UserService) *WebhookHandler {
-	return &WebhookHandler{
+func NewUsersWebhookHandler(whSecret string, service *service.UserService) *UsersWebhookHandler {
+	return &UsersWebhookHandler{
 		userService: service,
 		whSecret:    whSecret,
 	}
 }
 
-func (wh *WebhookHandler) HandleUsersWebhooks(w http.ResponseWriter, r *http.Request) {
+func (wh *UsersWebhookHandler) HandleUsersWebhooks(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// Limit request body size to 1MB
-	const maxBytes = 1 << 20 // 1MB
-	r.Body = http.MaxBytesReader(w, r.Body, maxBytes)
+	r.Body = http.MaxBytesReader(w, r.Body, MAX_BYTES)
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -56,7 +57,7 @@ func (wh *WebhookHandler) HandleUsersWebhooks(w http.ResponseWriter, r *http.Req
 		}
 		return
 	}
-	
+
 	log.Printf("Event payload: %v", string(body))
 
 	// TODO: Verify webhook
@@ -88,7 +89,7 @@ func (wh *WebhookHandler) HandleUsersWebhooks(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusOK)
 }
 
-func (wh *WebhookHandler) handleUserCreated(ctx context.Context, data json.RawMessage) error {
+func (wh *UsersWebhookHandler) handleUserCreated(ctx context.Context, data json.RawMessage) error {
 	var usrData UserCreatedOrUpdatedEvent
 
 	if err := json.Unmarshal(data, &usrData); err != nil {
@@ -112,7 +113,7 @@ func (wh *WebhookHandler) handleUserCreated(ctx context.Context, data json.RawMe
 	return wh.userService.CreateUser(ctx, usrRequest)
 }
 
-func (wh *WebhookHandler) handleUserUpdated(ctx context.Context, data json.RawMessage) error {
+func (wh *UsersWebhookHandler) handleUserUpdated(ctx context.Context, data json.RawMessage) error {
 	var usrData UserCreatedOrUpdatedEvent
 
 	if err := json.Unmarshal(data, &usrData); err != nil {
