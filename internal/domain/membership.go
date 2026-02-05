@@ -5,8 +5,8 @@ type Member struct {
 	Firstname       string `json:"first_name" db:"first_name"`
 	Lastname        string `json:"last_name" db:"last_name"`
 	Identifier      string `json:"identifier" db:"identifier"`
-	ImageURL        string `json:"profile_image_url" db:"profile_image_url"`
-	ProfileImageURL string `json:"image_url" db:"image_url"`
+	ImageURL        string `json:"image_url" db:"image_url"`
+	ProfileImageURL string `json:"profile_image_url" db:"profile_image_url"`
 }
 
 type Role struct {
