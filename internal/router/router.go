@@ -10,8 +10,10 @@ import (
 )
 
 type AppRouter struct {
-	AuthProvider auth.AuthProvider
-	WhHandler    *handler.WebhookHandler
+	AuthProvider           auth.AuthProvider
+	WhHandler              *handler.UsersWebhookHandler
+	OrganizationsWhHandler *handler.OrgsWebhookHandler
+	MembershipWhHandler    *handler.MembershipWebhookHandler
 }
 
 func (a *AppRouter) Mount() http.Handler {
@@ -36,9 +38,13 @@ func (a *AppRouter) Mount() http.Handler {
 			_, _ = w.Write([]byte(`{ "status": "ok" }`))
 		})
 	})
-	
+
 	r.Route("/webhooks", func(r chi.Router) {
-		r.Post("/clerk", a.WhHandler.CreateUser)
+		r.Route("/clerk", func(r chi.Router) {
+			r.Post("/users", a.WhHandler.HandleUsersWebhooks)
+			r.Post("/organizations", a.OrganizationsWhHandler.HandleOrganizationsWebhook)
+			r.Post("/memberships", a.MembershipWhHandler.HandleMembershipWebhook)
+		})
 	})
 
 	return r

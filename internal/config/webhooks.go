@@ -7,7 +7,7 @@ import (
 )
 
 type WebhookEvent struct {
-	ID        string          `json:"id"`
+	ID        string          `json:"instance_id"`
 	Type      string          `json:"type"`
 	Timestamp time.Time       `json:"-"`
 	Data      json.RawMessage `json:"data"`
@@ -21,26 +21,6 @@ type WebhookLog struct {
 	ProcessedAt     time.Time
 	ProcessingError sql.NullString
 	Success         bool
-}
-
-type UserCreatedEvent struct {
-	Firstname      string         `json:"first_name"`
-	Lastname       string         `json:"last_name"`
-	UserID         string         `json:"id"`
-	EmailAddresses []EmailAddress `json:"email_addresses"`
-	ImageURL       string         `json:"image_url"`
-}
-
-type UserUpdatedEvent struct {
-	Firstname      string         `json:"first_name"`
-	Lastname       string         `json:"last_name"`
-	UserID         string         `json:"id"`
-	EmailAddresses []EmailAddress `json:"email_addresses"`
-	ImageURL       string         `json:"image_url"`
-}
-
-type EmailAddress struct {
-	EmailAdresses string `json:"email_address"`
 }
 
 func NewWebhookEvent() *WebhookEvent {

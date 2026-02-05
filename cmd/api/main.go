@@ -31,15 +31,17 @@ func main() {
 	}
 
 	required := map[string]string{
-		"PORT":              os.Getenv("PORT"),
-		"DATABASE_PORT":     os.Getenv("DATABASE_PORT"),
-		"DATABASE_HOST":     os.Getenv("DATABASE_HOST"),
-		"DATABASE_USER":     os.Getenv("DATABASE_USER"),
-		"DATABASE_PASSWORD": os.Getenv("DATABASE_PASSWORD"),
-		"DATABASE_NAME":     os.Getenv("DATABASE_NAME"),
-		"SSL_MODE":          os.Getenv("SSL_MODE"),
-		"AUTH_SECRET_KEY":   os.Getenv("AUTH_SECRET_KEY"),
-		"CLERK_WEBHOOK_SECRET": os.Getenv("CLERK_WEBHOOK_SECRET"),
+		"PORT":                               os.Getenv("PORT"),
+		"DATABASE_PORT":                      os.Getenv("DATABASE_PORT"),
+		"DATABASE_HOST":                      os.Getenv("DATABASE_HOST"),
+		"DATABASE_USER":                      os.Getenv("DATABASE_USER"),
+		"DATABASE_PASSWORD":                  os.Getenv("DATABASE_PASSWORD"),
+		"DATABASE_NAME":                      os.Getenv("DATABASE_NAME"),
+		"SSL_MODE":                           os.Getenv("SSL_MODE"),
+		"AUTH_SECRET_KEY":                    os.Getenv("AUTH_SECRET_KEY"),
+		"CLERK_USERS_WEBHOOK_SECRET":         os.Getenv("CLERK_USERS_WEBHOOK_SECRET"),
+		"CLERK_ORGANIZATIONS_WEBHOOK_SECRET": os.Getenv("CLERK_ORGANIZATIONS_WEBHOOK_SECRET"),
+		"CLERK_MEMBERS_WEBHOOK_SECRET":       os.Getenv("CLERK_MEMBERS_WEBHOOK_SECRET"),
 	}
 	for k, v := range required {
 		if v == "" {
@@ -71,21 +73,29 @@ func main() {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 	defer db.Close()
-	
+
 	// REPOSITORIES
 	userRepo := repository.NewUserRepository(db)
-	
+	organizationsRepo := repository.NewOrganizationsRepository(db)
+	membersRepo := repository.NewMembershipRepository(db)
+
 	// SERVICES
 	userService := service.NewUserService(userRepo)
-	
-	// HANDLERS	
-	whHandler := handler.NewWebhookHandler(required["CLERK_WEBHOOK_SECRET"], userService)
+	organizationsService := service.NewOrganizationsService(organizationsRepo)
+	membersService := service.NewMembershipService(membersRepo)
+
+	// HANDLERS
+	whHandler := handler.NewUsersWebhookHandler(required["CLERK_USERS_WEBHOOK_SECRET"], userService)
+	OrgsWhHandler := handler.NewOrganizationsWebhookHandler(required["CLERK_ORGANIZATIONS_WEBHOOK_SECRET"], organizationsService)
+	MembersWhHandler := handler.NewMembershipWebhookHandler(required["CLERK_MEMBERS_WEBHOOK_SECRET"], membersService)
 
 	cfg := config.LoadConfig(authConfig)
 	clerkProvider := clerk.NewProvider(*cfg.AuthConfig)
 	apiRouter := &router.AppRouter{
-		AuthProvider: clerkProvider,
-		WhHandler: whHandler,
+		AuthProvider:           clerkProvider,
+		WhHandler:              whHandler,
+		OrganizationsWhHandler: OrgsWhHandler,
+		MembershipWhHandler:    MembersWhHandler,
 	}
 
 	srv := &application{
